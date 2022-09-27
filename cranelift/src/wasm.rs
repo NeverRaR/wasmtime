@@ -109,6 +109,9 @@ pub struct Options {
     /// Use colors in output? [options: auto/never/always; default: auto]
     #[clap(long = "color", default_value("auto"))]
     color: ColorOpt,
+
+    #[clap(short = 'f')]
+    target_func_idx: Option<usize>,
 }
 
 #[derive(PartialEq, Eq)]
@@ -187,6 +190,10 @@ fn handle_module(options: &Options, path: &Path, name: &str, fisa: FlagsOrIsa) -
 
     let debug_info = options.value_ranges;
     let mut dummy_environ = DummyEnvironment::new(isa.frontend_config(), debug_info);
+
+    if let Some(idx) = options.target_func_idx {
+        dummy_environ.info.target_func = Some(FuncIndex::new(idx));
+    }
     translate_module(&module_binary, &mut dummy_environ)?;
 
     vcprintln!(options.verbose, use_color, terminal, Color::Green, "ok");

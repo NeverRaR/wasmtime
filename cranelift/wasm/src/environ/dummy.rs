@@ -83,6 +83,10 @@ pub struct DummyModuleInfo {
 
     /// The start function.
     pub start_func: Option<FuncIndex>,
+
+    pub target_func: Option<FuncIndex>,
+
+    pub cur_func_idx: usize,
 }
 
 impl DummyModuleInfo {
@@ -101,6 +105,8 @@ impl DummyModuleInfo {
             memories: PrimaryMap::new(),
             globals: PrimaryMap::new(),
             start_func: None,
+            target_func: None,
+            cur_func_idx: 0,
         }
     }
 }
@@ -846,12 +852,16 @@ impl<'data> ModuleEnvironment<'data> for DummyEnvironment {
         let func = {
             let mut func_environ =
                 DummyFuncEnvironment::new(&self.info, self.expected_reachability.clone());
-            let func_index =
-                FuncIndex::new(self.get_num_func_imports() + self.info.function_bodies.len());
-
+            let func_index = FuncIndex::new(self.get_num_func_imports() + self.info.cur_func_idx);
             let sig = func_environ.vmctx_sig(self.get_func_type(func_index));
             let mut func =
                 ir::Function::with_name_signature(UserFuncName::user(0, func_index.as_u32()), sig);
+            if let Some(index) = self.info.target_func {
+                if index != func_index {
+                    self.info.cur_func_idx += 1;
+                    return Ok(());
+                }
+            }
 
             if self.debug_info {
                 func.collect_debug_info();
@@ -861,6 +871,7 @@ impl<'data> ModuleEnvironment<'data> for DummyEnvironment {
                 .translate_body(&mut validator, body, &mut func, &mut func_environ)?;
             func
         };
+        self.info.cur_func_idx += 1;
         self.info.function_bodies.push(func);
         Ok(())
     }
