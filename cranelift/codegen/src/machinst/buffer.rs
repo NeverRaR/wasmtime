@@ -199,6 +199,8 @@ impl CompilePhase for Final {
 /// any heap allocation. As such, it will be several kilobytes large. This is
 /// likely fine as long as it is stack-allocated for function emission then
 /// thrown away; but beware if many buffer objects are retained persistently.
+///
+#[derive(Debug)]
 pub struct MachBuffer<I: VCodeInst> {
     /// The buffer contents, as raw bytes.
     data: SmallVec<[u8; 1024]>,
@@ -1472,6 +1474,7 @@ impl<T: CompilePhase> MachBufferFinalized<T> {
 }
 
 /// A constant that is deferred to the next constant-pool opportunity.
+#[derive(Debug)]
 struct MachLabelConstant {
     /// This label will refer to the constant's offset.
     label: MachLabel,
